@@ -1,0 +1,491 @@
+﻿<html> 
+<head>
+<title>JavaScript Decoder</title>
+</head> 
+<body> 
+  
+<style>
+form label {
+	font-size:25px;
+	background: #fafafa;
+	margin:5px;
+	padding-left: 20px;
+	display:block;
+	width:400px;
+}
+input[type="radio"], input[type="checkbox"] {
+	transform: scale(1.2);
+	margin-right: 10px;
+}
+input[type="button"], input[type="file"], input[type="text"] {
+	font-size:25px;
+	margin:5px;
+	min-width:250px;
+}
+.input {
+	min-width: 0px !important;
+	width:100px;
+}
+.btnNav {
+	min-width: 0px !important;
+	width:100px;
+}
+.chkBox {
+	font-size:20px;
+}
+</style>
+
+<b>Source data<br></b>  
+<textarea id="sourceData" style="width:900px; height:100px;" onKeyUp='process(true)' onFocus='process(true)' onBlur='process(true)'></textarea><br>
+<b>Encoded data<br></b>  
+<textarea id="resultData" style="width:900px; height:100px;" onKeyUp='process(false)' onFocus='process(false)' onBlur='process(false)'></textarea> 
+<br><br>
+
+<form action="" style="font-size:30px" name="operationType">
+	<label class="chkBox"><input type="checkbox" name="allSymbols" checked>Encode all symbols</label>
+	<label><input type="radio" name="operation" value="unicode">String to Unicode</label>
+	<label><input type="radio" name="operation" value="html">String to HTML</label>
+	<label><input type="radio" name="operation" value="uri">String to URI encode</label>
+	<label><input type="radio" name="operation" value="base64">String to Base64</label>
+	<label><input type="radio" name="operation" value="hexToBase64">Hex to Base64</label>
+	<label><input type="radio" name="operation" value="hexBin" checked>Hex to Bin</label>
+	<label><input type="radio" name="operation" value="hex">Dec to Hex</label>
+	<label><input type="radio" name="operation" value="binary">Dec to Bin</label>
+</form>
+
+<input type="file" id="fileInput" name="file" onchange="fileSelected(this);" /><br>
+<div id="fileName"></div>
+<div id="fileSize"></div>
+<div id="fileType"></div>
+<br>
+<input type="button" value="Save to file" onclick="saveTmpDataToFile()" /> <input type="button" value="From base64" onclick="tmpDataFromBase64()" /> <br>
+<input type="button" value="To text" onclick="tmpDataToText()" /> <input type="button" value="To base64" onclick="tmpDataToBase64()" /> <br>
+
+<br><br>
+<pre>
+🍺🌼🍓😜😀👍🐊🥕🧀
+UTF-8 Encoding:
+(1 байт,   7 бит)  0xxx xxxx                                                    0       -     127   (000000 - 00007F)
+(2 байта, 11 бит)  110x xxxx 10xx xxxx                                          128     -    2047   (000080 - 0007FF)
+(3 байта, 16 бит)  1110 xxxx 10xx xxxx 10xx xxxx                                2048    -   65535   (000800 - 00FFFF)   (UNICODE 16 maximum)
+(4 байта, 21 бит)  1111 0xxx 10xx xxxx 10xx xxxx 10xx xxxx                      65536   - 1114111   (010000 - 10FFFF)   (RFC 3629 - maximum)
+(5 байт,  26 бит)  1111 10xx 10xx xxxx 10xx xxxx 10xx xxxx 10xx xxxx
+(6 байт,  31 бит)  1111 110x 10xx xxxx 10xx xxxx 10xx xxxx 10xx xxxx 10xx xxxx
+
+Data URL:
+data:text/html;charset=utf-8,...
+data:image/png;base64,...
+data:application/octet-stream,...
+
+https://codebeautify.org/jsonviewer
+
+</pre>
+
+<input type="text" value="127044" id="charsOffset" class="input" /> 
+<input type="button" value="<<<" class="btnNav" onclick="gen_chr('<');" />
+<input type="button" value=">>>" class="btnNav" onclick="gen_chr('>');" />
+<br>
+<div id="charsResult" style="width:1200px; padding:10px;background: #eee;font-size:22px;"></div>
+<br>
+<br>
+
+<script type="text/javascript"> 
+
+function process(encode) { 
+	//var operationType = document.querySelector('input[name="operation"]:checked').value;
+	var operationType = document.operationType.operation.value;
+	console.log("operation: " + operationType + "; " + (encode ? "encode" : "decode"));
+	
+	// get input data
+	var inputData = encode ? document.getElementById('sourceData').value : document.getElementById('resultData').value;
+	var allSymbols = document.operationType.allSymbols.checked;
+	var result = "";
+	
+	// convert
+	if  (operationType == "base64") {
+		result = encode ? Base64.encode(inputData) : Base64.decode(inputData);
+	}
+	
+	if (operationType == "hexToBase64") {
+		if (encode) {
+			result = inputData.replace(/[^0-9a-f]/gi, "");
+			var array = new Uint8Array(result.length/2);
+			for (var i = 0; i < result.length; i+=2) {
+				array[i/2] = parseInt(result.substring(i,i+2), 16); 
+			}
+			result = Base64.encode(array);
+		} else {
+			var array = Base64.decode(inputData, true);
+			for (var i = 0; i < array.length; i++) {
+				result += array[i].toString(16).toUpperCase().pad(2) + " ";
+			}
+		}
+	}
+	
+	if (operationType == "uri") {
+		result = encode ? encodeURIComponent(inputData) : decodeURIComponent(inputData);
+	}
+	
+	if (operationType == "unicode") {
+		if (encode) {
+			if (allSymbols) {
+				result = inputData.replace(/[\s\S]/gi, function (match, grp) { return "\\u" + parseInt(match.charCodeAt(0)).toString(16).toUpperCase().pad(4); });
+			} else {
+				result = escape(inputData);
+				console.log(result);
+				result = result.replace(/(%)(u([\d\w]{4}))/gi, '\\\$2');	// %uAABB -> \uAABB
+				result = result.replace(/(%)(([\d\w]{2}))/gi, '\\u00\$2');  // %20 -> \u0020
+			}
+		} else {
+			result = inputData.replace(/\\u([\d\w]{4})/gi, function (match, grp) { return String.fromCharCode(parseInt(grp, 16)); });
+			result = unescape(result);
+		}
+	}
+	
+	if (operationType == "html") {
+		if (encode) {
+			result = inputData.replace(/[\s\S]/gi, function (match, grp) { return "&#"+match.charCodeAt(0)+";"; });
+		} else {
+			result = decodeEntities(inputData);
+		}
+	}
+	
+	if (operationType == "hexBin") {
+		var list = inputData.split(/[^0-9A-Fa-f]+/);
+		var array = new Array; 
+		for	(var i = 0; i < list.length; i++) { 
+			if (list[i].length == 0) continue;
+			var str = encode ? parseInt(list[i], 16).toString(2).pad(8) : parseInt(list[i], 2).toString(16).toUpperCase().pad(2);
+			array.push(str);
+		}
+		result = array.join("\n");
+	}
+	
+	if (operationType == "hex") {
+		var list = inputData.split(/[^0-9A-Fa-f]+/);
+		var array = new Array; 
+		for	(var i = 0; i < list.length; i++) { 
+			if (list[i].length == 0) continue;
+			var str = encode ? parseInt(list[i], 10).toString(16).toUpperCase().pad(2) : parseInt(list[i], 16).toString(10).pad(3);
+			array.push(str);
+		}
+		result = array.join("\n");
+	}
+	
+	if (operationType == "binary") {
+		var list = inputData.split(/[^0-9A-Fa-f]+/);
+		var array = new Array; 
+		for	(var i = 0; i < list.length; i++) { 
+			if (list[i].length == 0) continue;
+			var str = encode ? parseInt(list[i], 10).toString(2).pad(8) : parseInt(list[i], 2).toString(10).pad(3);
+			array.push(str);
+		}
+		result = array.join("\n");
+	}
+	
+	// show result
+	if (encode) {
+		document.getElementById('resultData').value = result;
+	} else {
+		document.getElementById('sourceData').value = result;
+	}
+}
+
+var decodeEntities = (function() {
+	var element = document.createElement('div');
+	function decodeHTMLEntities(str) {
+		if (str && typeof str === 'string') {
+			str = str.replace(/<script[^>]*>([\S\s]*?)<\/script>/gmi, '');
+			str = str.replace(/<\/?\w(?:[^"'>]|"[^"]*"|'[^']*')*>/gmi, '');
+			element.innerHTML = str;
+			str = element.textContent;
+			element.textContent = '';
+		}
+		return str;
+	}
+	return decodeHTMLEntities;
+})();
+
+// ******************************** Generate Symbols ***********************************
+
+function gen_chr(cmd) {
+	var charsCount = 700;
+	var input = document.getElementById('charsOffset');
+	var charsOffset = parseInt(input.value);
+	
+	if (cmd == ">") {
+		charsOffset = charsOffset + charsCount;
+	}
+	if (cmd == "<") {
+		charsOffset = Math.max(0, charsOffset - charsCount);
+	}
+	input.value = charsOffset;
+	
+	var str = '';
+	var n_start = charsOffset;
+	for (var i=0; i < charsCount; i++) {
+		str += ' &#'+(n_start + i)+';';
+		if ((i%30==0)&&(i>0)) str+=' ===<br />';
+	}
+	
+	str+=' <br />';
+	document.getElementById('charsResult').innerHTML = str;
+}
+
+// ****************************** File Save Load ***************************************
+
+var tmpData = new Uint8Array(0);
+
+function fileSelected(element) {
+	var file = document.getElementById('fileInput').files[0];
+	if (file) {
+		var fileSize = 0;
+		if (file.size > 1024 * 1024) {
+			fileSize = (Math.round(file.size * 100 / (1024 * 1024)) / 100).toString() + 'MB';
+		} else {
+			fileSize = (Math.round(file.size * 100 / 1024) / 100).toString() + 'KB';
+		}
+		document.getElementById('fileName').innerHTML = 'Name: ' + file.name;
+		document.getElementById('fileSize').innerHTML = 'Size: ' + fileSize;
+		document.getElementById('fileType').innerHTML = 'Type: ' + file.type;
+		
+		readFile('fileInput', function (file) {
+			tmpData = new Uint8Array(file);
+		});
+	}
+}
+
+function tmpDataFromBase64() {
+	var operationType = document.operationType.operation.value;
+	if (operationType != "base64" && operationType != "hexToBase64") { 
+		alert("Must be selected Base64 result"); 
+		return; 
+	}
+	tmpData = Base64.decode(document.getElementById('resultData').value, true);
+	alert("Data loaded, size = " + tmpData.length);
+}
+
+function saveTmpDataToFile() {
+	if (tmpData.length == 0) { alert("No data"); return; }
+	saveFile('result.txt', tmpData);
+}
+
+function tmpDataToText() {
+	if (tmpData.length == 0) { alert("No data"); return; }
+	var result = Base64.decodeUTF8(tmpData);
+	document.getElementById('sourceData').value = result;
+}
+
+function tmpDataToBase64() {
+	if (tmpData.length == 0) { alert("No data"); return; }
+	var result = Base64.encode(tmpData);
+	document.operationType.operation.value = "base64"; // select radio button
+	document.getElementById('resultData').value = result;
+}
+
+
+
+function readFile(file_id, callback) {
+	var files = document.getElementById(file_id).files;
+	if (!files.length) {
+		alert('No file!');
+		return;
+	}
+
+	var file = files[0];
+	var reader = new FileReader();
+	reader.onloadend = function(evt) {
+		if (evt.target.readyState == FileReader.DONE) {
+			var target = evt.target || evt.srcElement;			
+			callback(target.result);
+		}
+	};
+
+	//reader.readAsText(file, 'ansi');		// считывает файл как строку. По умолчанию в кодировке UTF-8
+	//reader.readAsDataURL(file);			// как закодированный URL
+	reader.readAsArrayBuffer(file);			// как объект ArrayBuffer
+	//reader.readAsBinaryString(file);		// как двоичный код
+	
+	return 1;
+}
+
+var saveFile = (function () {  // function (fileName, data)
+	var a = document.createElement("a");
+	document.body.appendChild(a);
+	a.style = "display: none";
+	return function (fileName, data) {
+		var json = data; //JSON.stringify(data),
+		var blob = new Blob([json], {type: "octet/stream"});
+		var url = window.URL.createObjectURL(blob);
+		a.href = url;
+		a.download = fileName;
+		a.click();
+		window.URL.revokeObjectURL(url);
+	};
+}());
+
+// ************************************************************************************
+// ************************************* Helpers **************************************
+// ************************************************************************************
+
+String.prototype.pad = function(size) {
+      var s = String(this);
+      while (s.length < (size || 2)) {s = "0" + s;}
+      return s;
+    }
+
+var Base64 = {
+	// private property
+	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+	// public method for encoding
+	encode : function (input) {
+		var output = "";
+		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+		var i = 0;
+		var getByte = function (index) { return "";};
+		
+		if (typeof input == "string") {
+			input = Base64.encodeUTF8(input); // encode unicode to utf8
+			getByte = function (index) { return input.charCodeAt(index); };
+		} else { // array
+			getByte = function (index) { return input[index]; };
+		}
+		
+		while (i < input.length) {
+			chr1 = getByte(i++);
+			chr2 = getByte(i++);
+			chr3 = getByte(i++);
+			enc1 = chr1 >> 2;
+			enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+			enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+			enc4 = chr3 & 63;
+			if (isNaN(chr2)) {
+				enc3 = enc4 = 64;
+			} else if (isNaN(chr3)) {
+				enc4 = 64;
+			}
+			output = output + this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) + this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+		}
+		
+		return output;
+	},
+
+	// public method for decoding
+	decode : function (input, toArray) {
+		var output = "";
+		var chr1, chr2, chr3;
+		var enc1, enc2, enc3, enc4;
+		var i = 0;
+		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+		
+		if (toArray) {
+			output = new Uint8Array(input.length * 3 / 4);
+			var j = 0;
+			while (i < input.length) {
+				enc1 = this._keyStr.indexOf(input[i++]);
+				enc2 = this._keyStr.indexOf(input[i++]);
+				enc3 = this._keyStr.indexOf(input[i++]);
+				enc4 = this._keyStr.indexOf(input[i++]);
+				chr1 = (enc1 << 2) | (enc2 >> 4);
+				chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+				chr3 = ((enc3 & 3) << 6) | enc4;
+				output[j++] = chr1;
+				if (enc3 != 64) {
+					output[j++] = chr2;
+				}
+				if (enc4 != 64) {
+					output[j++] = chr3;
+				}
+			}
+			if (output.length != j) {
+				output = output.slice(0, j);
+			}
+			
+		} else {
+			while (i < input.length) {
+				enc1 = this._keyStr.indexOf(input.charAt(i++));
+				enc2 = this._keyStr.indexOf(input.charAt(i++));
+				enc3 = this._keyStr.indexOf(input.charAt(i++));
+				enc4 = this._keyStr.indexOf(input.charAt(i++));
+				chr1 = (enc1 << 2) | (enc2 >> 4);
+				chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+				chr3 = ((enc3 & 3) << 6) | enc4;
+				output = output + String.fromCharCode(chr1);
+				if (enc3 != 64) {
+					output = output + String.fromCharCode(chr2);
+				}
+				if (enc4 != 64) {
+					output = output + String.fromCharCode(chr3);
+				}
+			}
+			output = Base64.decodeUTF8(output); // decode utf8 to unucode
+		}
+		
+		return output;
+	},
+	
+	// UTF-8 encoding
+	encodeUTF8 : function (string) {
+		string = string.replace(/\r\n/g,"\n");
+		var utftext = "";
+
+		for (var n = 0; n < string.length; n++) {
+			var c = string.charCodeAt(n);
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			} else if ((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			} else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+		}
+
+		return utftext;
+	},
+
+	// UTF-8 decoding
+	decodeUTF8 : function (input) {
+		var string = "";
+		var i = 0;
+		var c = c1 = c2 = 0;
+		var getByte;
+		
+		if (typeof input == "string") { 
+			getByte = function (index) { return input.charCodeAt(index); };
+		} else { // array
+			getByte = function (index) { return input[index]; };
+		}
+		
+		while ( i < input.length ) {
+			c = getByte(i++);
+			if (c < 128 || c < 0b11000000) {
+				string += String.fromCharCode(c);
+			} else if ((c >= 0b11000000) && (c < 0b11100000)) {
+				c2 = getByte(i++);
+				string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+			} else if ((c >= 0b11100000) && (c < 0b11110000)) {
+				c2 = getByte(i++);
+				c3 = getByte(i++);
+				string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+			} else {
+				c2 = getByte(i++);
+				c3 = getByte(i++);
+				c4 = getByte(i++);
+				string += String.fromCharCode(((c & 255) << 18) | ((c2 & 63) << 12) | ((c3 & 63) << 6) | (c4 & 63));
+			}
+
+			// decode F09F8CBC0A to single char
+		}
+
+		return string;
+	}
+}
+
+</script> 
+
+</body> 
+</html> 
