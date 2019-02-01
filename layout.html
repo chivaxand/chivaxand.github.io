@@ -1,0 +1,21 @@
+---
+layout: default
+---
+
+<h1> Layout test </h1>
+
+<p>{{ site.title | xml_escape }}</p>
+<p>{{ site.description | xml_escape }}</p>
+<p>{{ site.time | date_to_rfc822 }}</p>
+
+<ul>
+    {% for page in site.pages %}
+      <li>
+        <span>{{ page.date | date: "%b %-d, %Y" }}</span>
+        <h2>
+          <a href="{{ page.url | prepend: site.baseurl }}">{{ page.title }}</a>
+        </h2>
+        {{ page.excerpt }}
+      </li>
+    {% endfor %}
+  </ul>

@@ -1,0 +1,10 @@
+# Custom settings
+title: siteTitle
+description: > # ignore newlines 
+  "description 1
+  description 2
+  description 3"
+baseurl: ""
+
+# Build settings
+markdown: kramdown
