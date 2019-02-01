@@ -1,0 +1,117 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width">
+		<title>Hello</title>
+		<link rel="shortcut icon" href="img/folder.png">
+		<style>
+html {
+	height: 100%
+}
+
+body {
+	padding: 0 20px;
+	display: flex;
+	flex-direction: column;
+	height: 100%
+}
+
+header {
+	flex: 3
+}
+
+footer {
+	flex: 7
+}
+
+.dm-wrapper {
+	width: 100%;
+	max-width: 360px;
+	text-align: center;
+	margin: 0 auto;
+	font-family: arial, verdana, tahoma, helvetica, sans-serif
+}
+
+.dm-title {
+	font-size: 24px;
+	font-weight: bold;
+	line-height: 34px;
+	height: 34px
+}
+
+.dm-icon {
+	margin-top: 24px
+}
+
+.dm-desc {
+	margin-top: 20px;
+	font-size: 18px;
+	line-height: 25px
+}
+
+.dm-action {
+	margin-top: 24px
+}
+
+.dm-btn {
+	display: block;
+	padding: 14px 20px;
+	user-select: none;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-user-select: none;
+	text-decoration: none;
+	margin-bottom: 12px;
+	font-size: 20px;
+	line-height: 28px;
+	height: 28px;
+	border-radius: 6px
+}
+
+.dm-drive-theme {
+	background-color: #1EB9C7;
+	color: #FFF
+}
+
+.dm-drive-theme .dm-btn {
+	color: #1EB9C7;
+	background-color: #FFF
+}
+
+.dm-drive-theme .dm-btn:active {
+	background-color: #DDF5F7
+}
+
+.dm-file-theme {
+	background-color: #F6F8FA;
+	color: #2E3032
+}
+
+.dm-file-theme .dm-btn {
+	color: #FFF;
+	background-color: #1EB9C7
+}
+
+.dm-file-theme .dm-btn:active {
+	background-color: #13ACBA
+}
+
+#state {
+	display: none
+}
+		</style>
+	</head>
+	
+	<body class="dm-file-theme">
+		<header></header>
+		<div class="dm-wrapper">
+			<div class="dm-title"></div>
+			<div class="dm-icon">
+				<img width="128" height="128" src="https://drive.custom.it/webman/3rdparty/SynologyDrive-Drive/images/_Asset/FileType/256/folder.png">
+			</div>
+			<div class="dm-desc">Directory name</div>
+			<div class="dm-action">
+			<a class="dm-btn" href="#none">Continue</a></div>
+		</div>
+		<footer></footer>
+</body></html>
