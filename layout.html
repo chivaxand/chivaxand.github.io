@@ -8,6 +8,7 @@ layout: default
 <p>{{ site.description | xml_escape }}</p>
 <p>{{ site.time | date_to_rfc822 }}</p>
 
+<h1>Pages:</h1>
 <ul>
     {% for page in site.pages %}
       <li>
@@ -16,6 +17,19 @@ layout: default
           <a href="{{ page.url | prepend: site.baseurl }}">{{ page.title }}</a>
         </h2>
         {{ page.excerpt }}
+      </li>
+    {% endfor %}
+  </ul>
+
+<h1>Posts:</h1>
+<ul>
+    {% for post in site.posts %}
+      <li>
+        <span>{{ post.date | date: "%b %-d, %Y" }}</span>
+        <h2>
+          <a href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
+        </h2>
+        {{ post.excerpt }}
       </li>
     {% endfor %}
   </ul>
