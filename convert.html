@@ -1,30 +1,48 @@
-﻿<html> 
+﻿
+<html> 
 <head>
 <title>JavaScript Decoder</title>
 </head> 
 <body> 
   
 <style>
+* {
+	font: 14px monospace;
+}
+form {
+	display: block; 
+	float: none;
+	width: 400px;
+	min-width: 400px;
+}
 form label {
-	font-size:25px;
+	font-size:20px;
 	background: #fafafa;
 	margin:5px;
 	padding-left: 20px;
 	display:block;
-	width:400px;
+	width:100%;
+}
+textarea {
+	font: 14px monospace;
+	min-height: 120px;
 }
 input[type="radio"], input[type="checkbox"] {
 	transform: scale(1.2);
 	margin-right: 10px;
 }
 input[type="button"], input[type="file"], input[type="text"] {
-	font-size:25px;
+	font-size:20px;
 	margin:5px;
 	min-width:250px;
 }
 .input {
 	min-width: 0px !important;
 	width:100px;
+}
+label input[type="text"] {
+	min-width: 200px;
+	display: inline-block;
 }
 .btnNav {
 	min-width: 0px !important;
@@ -33,24 +51,54 @@ input[type="button"], input[type="file"], input[type="text"] {
 .chkBox {
 	font-size:20px;
 }
+.actionsDiv {
+	display: block;
+	float: none;
+}
+.actionsDiv button {
+  background-color: #008CBA;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+}
 </style>
 
-<b>Source data<br></b>  
+<b>Source data: <span id="src-title">0</span><br></b>  
 <textarea id="sourceData" style="width:900px; height:100px;" onKeyUp='process(true)' onFocus='process(true)' onBlur='process(true)'></textarea><br>
-<b>Encoded data<br></b>  
+<b>Encoded data: <span id="res-title">0</span><br></b>  
 <textarea id="resultData" style="width:900px; height:100px;" onKeyUp='process(false)' onFocus='process(false)' onBlur='process(false)'></textarea> 
 <br><br>
 
-<form action="" style="font-size:30px" name="operationType">
-	<label class="chkBox"><input type="checkbox" name="allSymbols" checked>Encode all symbols</label>
-	<label><input type="radio" name="operation" value="unicode">String to Unicode</label>
-	<label><input type="radio" name="operation" value="html">String to HTML</label>
-	<label><input type="radio" name="operation" value="uri">String to URI encode</label>
-	<label><input type="radio" name="operation" value="base64">String to Base64</label>
-	<label><input type="radio" name="operation" value="hexToBase64">Hex to Base64</label>
-	<label><input type="radio" name="operation" value="hexBin" checked>Hex to Bin</label>
-	<label><input type="radio" name="operation" value="hex">Dec to Hex</label>
-	<label><input type="radio" name="operation" value="binary">Dec to Bin</label>
+<form action="" name="operationType">
+		<div class="actionsDiv">
+			<label class="chkBox"><input type="checkbox" name="allSymbols" checked>Encode all symbols</label>
+			<label><input type="radio" name="operation" value="strUppercase">String uppercase</label>
+			<label><input type="radio" name="operation" value="strNormalize">String normalize canonical</label>
+			<label><input type="radio" name="operation" value="unicode">String to Unicode</label>
+			<label><input type="radio" name="operation" value="html">String to HTML</label>
+			<label><input type="radio" name="operation" value="uri">String to URI encode</label>
+			<label><input type="radio" name="operation" value="base64">String to Base64</label>
+			<label><input type="radio" name="operation" value="hexToBase64">Hex to Base64</label>
+			<label><input type="radio" name="operation" value="hexBin">Hex to Bin</label>
+			<label><input type="radio" name="operation" value="hex">Dec to Hex</label>
+			<label><input type="radio" name="operation" value="binary" checked>Dec to Bin</label>
+			<label><input type="radio" name="operation" value="regReplace">Regular replace 
+				<input id="regReplace1" type="text" value="^(.+)$"/> 
+				to <input id="regReplace2" type="text" value='"$1",'/></label>
+			<label><input type="radio" name="operation" value="regFilter">Regular filter
+				<input id="regMatch" type="text" value="[0-9]+"/> match
+				<input id="regNotMatch" type="text" value=''/> not match</label>
+		</div>
+		<div class="actionsDiv">
+			<button>Action</button>
+			<button>Action</button>
+			<button>Action</button>
+			<button>Action</button>
+		</div>
 </form>
 
 <input type="file" id="fileInput" name="file" onchange="fileSelected(this);" /><br>
@@ -72,6 +120,24 @@ UTF-8 Encoding:
 (5 байт,  26 бит)  1111 10xx 10xx xxxx 10xx xxxx 10xx xxxx 10xx xxxx
 (6 байт,  31 бит)  1111 110x 10xx xxxx 10xx xxxx 10xx xxxx 10xx xxxx 10xx xxxx
 
+Format:
+"%hhu"		(uint8_t)
+"%hhd"		(int8_t)
+"%hu"		(uint16_t)
+"%hd"		(int16_t)
+"%u"		(uint32_t)
+"%d"		(int32_t)
+"%llu"		(uint64_t)
+"%lld"		(int64_t)
+"%f" %.3f	(float)
+"%c"		(char)
+"%s"		(char s[])
+"%#010X\n"	0x0000001A
+"%08x\n"	0000001a
+"%#04x\n"	0x1a
+"%04X\n"	001A
+
+
 Data URL:
 data:text/html;charset=utf-8,...
 data:image/png;base64,...
@@ -92,8 +158,10 @@ https://codebeautify.org/jsonviewer
 <script type="text/javascript"> 
 
 function process(encode) { 
-	//var operationType = document.querySelector('input[name="operation"]:checked').value;
-	var operationType = document.operationType.operation.value;
+	var option = document.operationType.querySelector('input[type="radio"]:checked'); //document.operationType.operation;
+	var operationType = option.value;
+	var labelElem = option.parentElement;
+	var parameters = labelElem.getElementsByTagName("input"); // first param: parameters[1].value
 	console.log("operation: " + operationType + "; " + (encode ? "encode" : "decode"));
 	
 	// get input data
@@ -141,6 +209,27 @@ function process(encode) {
 			result = unescape(result);
 		}
 	}
+
+
+	if (operationType == "strUppercase") {
+		if (encode) {
+			result = inputData.toLocaleUpperCase();
+		} else {
+			result = inputData.toLocaleLowerCase();
+		}
+	}
+
+	if (operationType == "strNormalize") {
+		// NFC: Normalization Form Canonical Composition.
+		// NFD: Normalization Form Canonical Decomposition.
+		// NFKC: Normalization Form Compatibility Composition.
+		// NFKD: Normalization Form Compatibility Decomposition. 
+		if (encode) {
+			result = inputData.normalize('NFC');
+		} else {
+			result = inputData.normalize('NFD');
+		}
+	}
 	
 	if (operationType == "html") {
 		if (encode) {
@@ -183,13 +272,56 @@ function process(encode) {
 		result = array.join("\n");
 	}
 	
+	if (operationType == "regReplace") {
+		encode = true;
+		var reg = new RegExp(parameters[1].value, "gmi");
+		result = inputData.replace(reg, parameters[2].value);
+	}
+
+	if (operationType == "regFilter") {
+		encode = true;
+		var lines = inputData.split(/\r?\n/);
+		var match = true;
+		if (parameters[1].value.length > 0) {
+			reg = new RegExp(parameters[1].value, "gmi");
+		} else if (parameters[2].value.length > 0) {
+			reg = new RegExp(parameters[2].value, "gmi");
+		}
+
+		if (reg) {
+			for (var i = 0; i < lines.length; i++) {
+				var line = lines[i];
+				if (reg.test(line) == match) {
+					result += line + "\n";
+				}
+			}
+
+		}
+	}
+
 	// show result
 	if (encode) {
 		document.getElementById('resultData').value = result;
 	} else {
 		document.getElementById('sourceData').value = result;
 	}
+	
+	// title info, size
+	document.getElementById('src-title').innerHTML = document.getElementById('sourceData').value.length;
+	document.getElementById('res-title').innerHTML = document.getElementById('resultData').value.length;
 }
+
+
+// **************************************************************************************************************************
+// **************************************************************************************************************************
+// **************************************************************************************************************************
+// **************************************************************************************************************************
+// **************************************************************************************************************************
+// **************************************************************************************************************************
+// **************************************************************************************************************************
+// **************************************************************************************************************************
+// **************************************************************************************************************************
+
 
 var decodeEntities = (function() {
 	var element = document.createElement('div');

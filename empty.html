@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!--<html xmlns="http://www.w3.org/1999/xhtml">-->
+<!--[if lt IE 7 ]> <html class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<script>var e = document.getElementsByTagName("html")[0]; e.className = e.className.replace(/\bno-js\b/,'');</script>
+	<link rel="stylesheet" href="/css.css" type="text/css">
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<!-- <script src="http://code.jquery.com/jquery-migrate-1.1.0.js"></script> -->
+	
+
+
+	<style type="text/css">
+		.no-js-div {
+			display: none;
+		}
+		.no-js .no-js-div {
+			display: block;
+			background: #FAA;
+			text-color: #000;
+		}
+		.main {
+			color: #505080;
+			font-size: 13pt;
+			text-align: left;
+			font-family: Tahoma;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #FAFAFF;
+			padding: 20pt;
+			margin: 20pt;
+		}
+		.main input[type="text"] {
+			color: #303030; 
+			font-size: 13pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #ffffff !important; 
+			outline: none; 
+			height: 24pt;
+			width: 300px; 
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+		}
+		input.small {
+			width: 100pt;
+		}
+		.main textarea {
+			color: #303030; 
+			font-size: 13pt;
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #ffffff !important; 
+			outline: none;
+			width:900px; height:100px;
+		}
+		.main select {
+			color: #303030;
+			font-size: 13pt;
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #ffffff !important; 
+			outline: none; 
+		}
+		.leftPart, .rightPart {
+			display: table-cell; /* display: table;  */
+		}
+
+		.result {
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #FFFFFF;
+			padding: 20pt;
+			margin: 20pt;
+			margin-left: 0;
+			width: auto;
+			min-height: 300px;
+		}
+		.main input[type="button"] {
+			color: #FFFFFF; 
+			font-size: 13pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #5f5fe4; 
+			outline: none; 
+			height: 40pt;
+			width: 200px; 
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+		}
+	</style>
+	
+
+
+	<script type="text/javascript">
+	//<![CDATA[
+	
+	function log(str, no_br) {
+		var br = '<br />';
+		if (no_br) br = '';
+		var log = document.getElementById('outData');
+		var new_val = '';
+		if (typeof str !== 'undefined') new_val = log.innerHTML + str+br;
+		log.innerHTML = new_val;
+	}
+
+	function addListener(element, type, fn) {
+		if (element.addEventListener) { element.addEventListener(type, fn, false); } 
+		else if (element.attachEvent) { element.attachEvent('on' + type, fn); }
+	}
+	
+	(function initOnLoad(onLoadFunc) {
+		if (window.addEventListener){ window.addEventListener("load", onLoadFunc, false); } 
+		else if (window.attachEvent) { window.attachEvent("onload", onLoadFunc); } 
+		else { document.addEventListener("load", onLoadFunc, false);}
+	})(function (e) {
+		log('Page loaded');
+		//addListener(document.getElementById('options'), 'change', onOptionChange);
+	})
+
+	function getById(identifier) {
+		return document.getElementById(identifier);
+	}
+	
+	function selectedOptionByID(identifier) {
+		var result = { text: "", value: "" };
+		var elem = getById(identifier);
+		var index = elem.selectedIndex;
+		result.text = elem[index].innerHTML;
+		result.value = elem[index].value;
+		
+		return result;
+	}
+
+	function onOptionChange(e) {
+		var elem = e.target || e;
+		log('changed: ' + elem.selectedOptions[0].value);
+	}
+	
+	function doActions(inpData) {
+		var inp_1 = getById('inp_1').value;
+		var inp_2 = getById('inp_2').value;
+		var inp_3 = getById('inp_3').value;
+		var text = getById('textArea').value.replace(/(?:\r\n|\r|\n)/g, '<br>');
+		var selectedOpt = selectedOptionByID('options');
+		log();
+
+		var radio = document.querySelector("form input:checked");
+
+		log('year: ' + inp_1);
+		log('month: ' + inp_2);
+		log('day: ' + inp_3);
+		log('text: ' + text);
+		log('option: ' + selectedOpt.text + ' -> ' + selectedOpt.value);
+		log('radio: ' + radio.value + ' -> ' + radio.parentElement.childNodes[1].textContent);
+		log('');
+	}
+		
+	//]]>
+	</script>
+
+</head>
+	
+<body>
+	<div class="main">
+		111&#65279;&#65279;&#65279;&#65279;&#65279;222  <br />
+		<input type="text" value="2013" id="inp_1" /> <br>
+		<input type="text" value="07" id="inp_2" /> <br>
+		<input type="text" value="24" id="inp_3" /> <br>
+		<textarea id="textArea"></textarea> <br>
+		<select id="options" onchange="onOptionChange(this)">
+	    	<option value="id111">111111111</option>
+		    <option value="id222">222222222</option>
+		    <option value="id333">333333333</option>
+		    <option value="id444">444444444</option>
+		</select> <br>
+
+		<form>
+			<label><input type="radio" id="choice1" name="group1" value="value111">value1</label> <br>
+			<label><input type="radio" id="choice2" name="group1" value="value222">value2</label> <br>
+			<label><input type="radio" id="choice3" name="group1" value="value333">value3</label> <br>
+		</form>
+
+		<br>
+		<input type="button" value="Run" onclick="doActions()" /> <br>
+		
+		<br><br>
+		<div id="outData" class="result">
+			<div class="no-js-div">JavaScript is Disabled!</div>
+		</div>
+
+	</div>
+</body>
+</html>
