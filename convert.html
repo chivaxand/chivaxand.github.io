@@ -82,10 +82,10 @@ label input[type="text"] {
 			<label><input type="radio" name="operation" value="html">String to HTML</label>
 			<label><input type="radio" name="operation" value="uri">String to URI encode</label>
 			<label><input type="radio" name="operation" value="base64">String to Base64</label>
-			<label><input type="radio" name="operation" value="hexToBase64">Hex to Base64</label>
+			<label><input type="radio" name="operation" value="hexToBase64" checked>Hex to Base64</label>
 			<label><input type="radio" name="operation" value="hexBin">Hex to Bin</label>
 			<label><input type="radio" name="operation" value="hex">Dec to Hex</label>
-			<label><input type="radio" name="operation" value="binary" checked>Dec to Bin</label>
+			<label><input type="radio" name="operation" value="binary">Dec to Bin</label>
 			<label><input type="radio" name="operation" value="regReplace">Regular replace 
 				<input id="regReplace1" type="text" value="^(.+)$"/> 
 				to <input id="regReplace2" type="text" value='"$1",'/></label>
@@ -191,7 +191,20 @@ function process(encode) {
 	}
 	
 	if (operationType == "uri") {
-		result = encode ? encodeURIComponent(inputData) : decodeURIComponent(inputData);
+		if (encode && allSymbols) {
+			result = encodeURIComponent(inputData);
+			result = result.replace(/(%[0-9A-F]{1,2})|([\s\S])/gi, function (match, grp) { 
+				var code = parseInt(match.charCodeAt(0));
+				if (code == 0x25) {
+					return match.toUpperCase(); 
+				} else {
+					return "%" + code.toString(16).toUpperCase().pad(2); 
+				}
+			});
+
+		} else {
+			result = encode ? encodeURIComponent(inputData) : decodeURIComponent(inputData);
+		}
 	}
 	
 	if (operationType == "unicode") {
