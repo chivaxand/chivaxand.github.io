@@ -1,0 +1,743 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta charset="utf-8">
+	<title>URL Share</title>
+	<style type="text/css">
+		body {
+			color: #505080;
+			font-size: 13pt;
+			text-align: left;
+			font-family: Tahoma;
+		}
+		input[type="text"] {
+			color: #303030; 
+			font-size: 13pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #ffffff !important; 
+			outline: none; 
+			height: 24pt;
+			width: 300px; 
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+		}
+		input[type="checkbox"] {
+			zoom: 1.7;
+    		margin: 0 2px 0 0;
+		}
+		input[type="button"] {
+			color: #FFFFFF; 
+			font-size: 13pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			outline: none; 
+			height: 35pt;
+			width: 200px; 
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 5pt 20pt;
+			text-align:center; 
+			background: #33bb33; 
+		}
+		input[type="radio"] {
+			zoom: 1.7;
+    		margin: 0 2px 0 0;
+		}
+		input.small {
+			width: 100pt;
+		}
+		textarea {
+			color: #303030; 
+			font-size: 13pt;
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+			border: 1px solid #ddddff; 
+			border-radius: 3px;
+			background: #ffffff !important; 
+			outline: none;
+			width:900px; 
+			height:100px;
+		}
+		iframe {
+			padding: 0pt;
+		    margin: 0pt;
+		    outline: 0px;
+		    border: 0px;
+		    height: 100%;
+		    width: 100%;
+		}
+		.hidden {
+			display: none;
+		}
+		.whiteContainer {
+			border: 1px solid #ddddff; 
+			border-radius: 3px;
+			background: #fff;
+			padding: 10pt;
+			margin: 20pt;
+		}
+		.tabsMain {
+			border: 1px solid #ddddff; 
+			border-radius: 3px;
+			background: #FAFAFF;
+			padding: 0pt 0pt 10pt 0pt;
+			margin: 20pt;
+		}
+		.result {
+			border: 1px solid #ddddff; 
+			border-radius: 3px;
+			background: #FFFFFF;
+			padding: 20pt;
+			margin: 20pt;
+			margin-left: 0;
+			width: auto;
+			min-height: 300px;
+		}
+		.tabsMain .tabContent {
+			display: none;
+			padding: 10pt 10pt;
+		}
+		.tabsMain .tabContent p {
+			margin: 5pt 0pt;
+		}
+		.tabsHeader {
+			border-bottom: 1px solid #ddddff;
+		}
+		.tabsHeader input[type="button"] {
+			border: 0px; 
+			border-radius: 0px;
+			background: inherit;
+			color: #999999;
+			width: auto; 
+			padding: 10pt 20pt;
+			margin: 0px;
+			cursor: pointer;
+		}
+		.tabsHeader input[type="button"]:hover {
+			background: #e3e3e3;
+		}
+		.tabsHeader input[type="button"].selected {
+			background: #33bb33;
+			color: #ffffff;
+		}
+		#content_html {
+			outline: 1px solid #DDDDFF;
+			background: #fff;
+			padding: 10px;
+		}
+	</style>
+</head>
+ 
+<body>
+
+<div class="whiteContainer hidden" id="downloadContainer" >
+	<div id="outputContent"></div><br>
+	<input type="button" id="download_btn" value="Download" onclick="downloadFile()" /> <br>
+</div>
+
+<div id="editorContainer">
+	<div class="tabsMain" id="otherSettings">
+		<div id="tabCommon" class="tabContent" style="display:block;">
+			<p>File name:</p>
+			<input type="text" value="file.txt" id="destFileName" /> <br>
+			<br>
+			<input type="button" id="generate_btn" value="Generate" onclick="generateLink()" /> <br>
+		</div>
+	</div>
+
+	<div class="tabsMain" id="resultType">
+		<div id="tabResultText" class="tabContent" title="Text">
+			<p>Show as text content</p>
+		</div>
+		<div id="tabResultHTML" class="tabContent" title="HTML">
+			<p>Show as HTML content</p>
+		</div>
+		<div id="tabResultFile" class="tabContent" title="Binary file">
+			<p>Binary file, only download</p>
+		</div>
+	</div>
+
+	<div class="tabsMain" id="sourceType">
+		<div id="tabSourceText" class="tabContent" title="Text">
+			<p>Text content</p>
+			<textarea id="content_text">Text content</textarea>
+		</div>
+		<div id="tabSourceHTML" class="tabContent" title="HTML">
+			<p>HTML content</p>
+			<div id="content_html" contenteditable><b>HTML</b> content</div>
+		</div>
+		<div id="tabSourceBase64" class="tabContent" title="Base64">
+			<p>Base64 content</p>
+			<textarea id="content_base64"></textarea>
+		</div>
+		<div id="tabSourceFile" class="tabContent" title="File">
+			<p>Upload file</p>
+			<p id="srcFileName"></p>
+			<p id="srcFileSize"></p>
+			<p id="srcFileType"></p>
+			<input type="file" id="content_file" onchange="handleSelectedFile(this)" /> <br>
+		</div>
+	</div>
+</div>
+
+	
+<script>
+
+/****************************************************************************/
+/******************************* On Load ************************************/
+/****************************************************************************/
+
+var sourceTypeTab = null;
+var resultTypeTab = null;
+var mainData = (function () {
+	var result = {};
+	result.file_base64 = null; // ase64 string of source file 
+	result.resultType = null; // result type tp display (text/html/file)
+	result.fileName = null; // file name to download
+
+	// Enum - result content type to display
+	result.ENUM_RESULT_TYPE_TEXT = "t";
+	result.ENUM_RESULT_TYPE_HTML = "h";
+	result.ENUM_RESULT_TYPE_BINARY = "b";
+
+	// Parameters in URL
+	result.URL_PARAM_JSON_DATA = "d";
+
+	// Parameters in JSON
+	result.JSON_PARAM_DATA = "d"; // Base64 data of file
+	result.JSON_PARAM_RESULT_TYPE = "r";
+	result.JSON_PARAM_FILE_NAME = "n";
+
+	return result;
+})();
+
+(function initOnLoad(onLoadFunc) {
+	if (window.addEventListener){ window.addEventListener("load", onLoadFunc, false); } 
+	else if (window.attachEvent) { window.attachEvent("onload", onLoadFunc); } 
+	else { document.addEventListener("load", onLoadFunc, false);}
+})(function (e) {
+	// init tabs
+	sourceTypeTab = initTabs(getById("sourceType"));
+	resultTypeTab = initTabs(getById("resultType"));
+
+	// parse URL query parameters if present
+	parseURLParameters();
+});
+
+/****************************************************************************/
+/******************************* Actions ************************************/
+/****************************************************************************/
+
+function parseURLParameters() {
+	// parse query parameters from URL
+	var paramString = window.location.search.replace("?", "");
+	if (paramString.length == 0) {
+		paramString = window.location.hash.replace("#", "");;
+	}
+	var items = paramString.split("&");
+	var params = {};
+	for (var i = 0; i < items.length; i++) {
+		var keyValue = items[i].split("=");
+		if (keyValue.length == 2) {
+			params[decodeURIComponent(keyValue[0])] = decodeURIComponent(keyValue[1]);
+		}
+	}
+	
+	var jsonStr = params[mainData.URL_PARAM_JSON_DATA];
+	if (jsonStr == null || jsonStr.length == 0) { // no parameters, exit
+		return;
+	}
+
+	
+	var json = JSON.parse(jsonStr);
+	if (json == null) {
+		console.error("Parse error: " + jsonStr);
+		return;
+	}
+
+	mainData.dataBase64 = json[mainData.JSON_PARAM_DATA];
+	mainData.resultType = json[mainData.JSON_PARAM_RESULT_TYPE];
+	mainData.fileName = json[mainData.JSON_PARAM_FILE_NAME];
+	
+	var resultType = mainData.resultType;
+	var base64 = mainData.dataBase64;
+	var content = "";
+	var outputContainer = getById("outputContent");
+	if (resultType == mainData.ENUM_RESULT_TYPE_TEXT) {
+		content = "<pre>" + escapeHTML(Base64.decode(base64)) + "</pre>";
+	} else if (resultType == mainData.ENUM_RESULT_TYPE_HTML) {
+		var showInFrame = true;
+		if (showInFrame) {
+			var frame = createFromHTML("<iframe></iframe>");
+			content = "<html>"+Base64.decode(base64)+"</html>";
+			outputContainer.appendChild(frame);
+			frame.contentWindow.document.open();
+			frame.contentWindow.document.write(content);
+			frame.contentWindow.document.close();
+			var updateHeight = function () {
+				frame.style.height = frame.contentWindow.document.body.scrollHeight + 'px';
+			}
+			frame.onload = updateHeight;
+			setTimeout(updateHeight, 10);
+			setTimeout(updateHeight, 1000);
+			content = null;
+		} else {
+			content = Base64.decode(base64);
+		}
+		
+	} else if (resultType == mainData.ENUM_RESULT_TYPE_BINARY) {
+		content = "File: " + mainData.fileName;
+	} else {
+		console.error("Unknown result content type: " + resultType);
+		return;
+	}
+
+	if (content != null && content.length > 0) {
+		outputContainer.innerHTML = content;
+	}
+	getById("downloadContainer").classList.remove("hidden"); // show content block
+	getById("editorContainer").classList.add("hidden"); // hide editor container
+}
+
+function insertAndExecute(elem, text) {
+    elem.innerHTML = text;
+    var scripts = Array.prototype.slice.call(document.getElementById(id).getElementsByTagName("script"));
+    for (var i = 0; i < scripts.length; i++) {
+        if (scripts[i].src != "") {
+            var tag = document.createElement("script");
+            tag.src = scripts[i].src;
+            document.getElementsByTagName("head")[0].appendChild(tag);
+        }
+        else {
+            eval(scripts[i].innerHTML);
+        }
+    }
+}
+
+function generateLink()	{
+	var name = getById("destFileName").value;
+	mainData.fileName = name;
+	if (name.length == 0) { 
+		name = "file.txt"; 
+	}
+	
+	var json = {};
+	var sourceTypeId = sourceTypeTab.selectedTab.tab.id;
+	var dataBase64 = null;
+	if (sourceTypeId == "tabSourceText") {
+		dataBase64 = Base64.encode(getById("content_text").value || "");
+	} else if (sourceTypeId == "tabSourceHTML") {
+		dataBase64 = Base64.encode(getById("content_html").innerHTML || "");
+	} else if (sourceTypeId == "tabSourceBase64") {
+		dataBase64 = getById("content_base64").value || "";
+	} else if (sourceTypeId == "tabSourceFile") {
+		dataBase64 = mainData.file_base64 || "";
+	} else {
+		alert("unknown source type");
+		return;
+	}
+
+	var resultTypeId = resultTypeTab.selectedTab.tab.id;
+	var resultType = null;
+	if (resultTypeId == "tabResultText") {
+		resultType = mainData.ENUM_RESULT_TYPE_TEXT; // text 
+	} else if (resultTypeId == "tabResultHTML") {
+		resultType = mainData.ENUM_RESULT_TYPE_HTML; // HTML
+	} else if (resultTypeId == "tabResultFile") {
+		resultType = mainData.ENUM_RESULT_TYPE_BINARY; // binary file
+	} else {
+		alert("unknown result type");
+		return;
+	}
+	
+	if (dataBase64 == null || dataBase64.length == 0) {
+		alert("no data");
+		return;
+	}
+	
+	/*
+	var binary = Base64.decode(dataBase64, true);
+	var compressed = lzw_encode(binary);
+	var decompressed = lzw_decode(compressed);
+	var base64_res = Base64.encode(decompressed);
+	if (base64_res == dataBase64) {
+		debugger;
+	}
+	// ************************************************************************************************************************************************************/
+
+	
+	mainData.dataBase64 = dataBase64;
+	json[mainData.JSON_PARAM_DATA] = dataBase64;
+	json[mainData.JSON_PARAM_RESULT_TYPE] = resultType;
+	json[mainData.JSON_PARAM_FILE_NAME] = name;
+
+	var jsonStr = JSON.stringify(json);
+	var params = {};
+	params[mainData.URL_PARAM_JSON_DATA] = jsonStr;
+	
+	var result = "";
+	var separator = "";
+	for (var key in params) {
+		result += separator + encodeURIComponent(key) + "=" + encodeURIComponent(params[key]);
+		separator = "&";
+	}
+	
+	result = result.replace('"', "%22");
+	var url = window.location.pathname + "#" + result;
+	window.open(url, '_blank');
+	//window.location.href = url;
+}
+
+function handleSelectedFile(e) {
+	read_file('content_file', getfile1);
+	function getfile1(buf, file) {
+		var array = new Uint8Array(buf);
+		var base64String = Base64.encode(array);
+		mainData.file_base64 = base64String;
+		getById("content_base64").value = base64String;
+		
+		var fileSize = 0;
+		if (file.size > 1024 * 1024) {
+			fileSize = (Math.round(file.size * 100 / (1024 * 1024)) / 100).toString() + 'MB';
+		} else {
+			fileSize = (Math.round(file.size * 100 / 1024) / 100).toString() + 'KB';
+		}
+		
+		mainData.fileName = file.name || "file.txt";
+		
+		getById('srcFileName').innerHTML = 'Name: ' + file.name;
+		getById('srcFileSize').innerHTML = 'Size: ' + fileSize;
+		getById('srcFileType').innerHTML = 'Type: ' + file.type;
+		getById('destFileName').value = mainData.fileName;
+	}
+}
+
+function downloadFile()	{
+	var data = Base64.decode(mainData.dataBase64, true);
+	var name = mainData.fileName || "file.txt";
+	saveData(data, name);
+}
+
+/****************************************************************************/
+/******************************* Helpers ************************************/
+/****************************************************************************/
+
+function addListener(element, type, fn) {
+	if (element.addEventListener) { element.addEventListener(type, fn, false); } 
+	else if (element.attachEvent) { element.attachEvent('on' + type, fn); }
+}
+
+function getById(identifier) {
+	return document.getElementById(identifier);
+}
+
+function createFromHTML(htmlString) {
+  var div = document.createElement('div');
+  div.innerHTML = htmlString.trim();
+  return div.firstChild; 
+}
+
+function escapeHTML(html) {
+    return document.createElement('div').appendChild(document.createTextNode(html)).parentNode.innerHTML;
+}
+
+function read_file(file_id, callback, opt_startByte, opt_stopByte) {
+	var files = document.getElementById(file_id).files;
+		if (!files.length) {
+		alert('No file!');
+		return;
+	}
+
+	var file = files[0];
+	var start = parseInt(opt_startByte) || 0;
+	var stop = parseInt(opt_stopByte) || file.size - 1;
+	var reader = new FileReader();
+	reader.onloadend = function(evt) {
+		if (evt.target.readyState == FileReader.DONE) {
+			var target = evt.target || evt.srcElement;			
+			callback(target.result, file);
+		}
+	};
+
+	reader.readAsArrayBuffer(file);
+
+	return 1;
+}
+
+var saveData = (function () {
+	var a = document.createElement("a");
+	document.body.appendChild(a);
+	a.style = "display: none";
+	return function (data, fileName) {
+		//data = JSON.stringify(data),
+		var	blob = new Blob([data], {type: "octet/stream"});
+		var	url = window.URL.createObjectURL(blob);
+		a.href = url;
+		a.download = fileName;
+		a.click();
+		a.remove();
+		window.URL.revokeObjectURL(url);
+	};
+}());
+
+/****************************************************************************/
+/******************************** Tabs **************************************/
+/****************************************************************************/
+
+function initTabs(tabElem) {
+	var result = {};
+	var headerElem = document.createElement("DIV");
+	headerElem.classList.add("tabsHeader");
+	result.headerElem = headerElem;
+	result.setCurrentTab = function (item) {
+		if (item == null) {
+			return;
+		}
+		for (var i = 0; i < this.tabs.length; i++) {
+			var other = this.tabs[i];
+			other.button.classList.remove("selected");
+			other.tab.style.display = "none";
+		}
+		item.button.classList.add("selected");
+		item.tab.style.display = "block";
+		this.selectedTab = item;
+	};
+
+	var tabsList = tabElem.querySelectorAll(".tabContent");
+	var tabs = [];
+	for (var i = 0; i < tabsList.length; i++) {
+		var item = {};
+		item.tab = tabsList[i];
+		item.id = item.tab.attributes["id"].value;
+		item.title = item.tab.attributes["title"].value;
+		if (item.title.length == 0) { // skip tabs without title
+			continue;
+		}
+		var button = createFromHTML("<input type='button' value='" + item.title + "' />");
+		button.onclick = function () { 
+			result.setCurrentTab(this.tabItem);
+		};
+		button.tabItem = item;
+		item.button = button;
+		headerElem.appendChild(button);
+		tabs.push(item);
+	}
+	result.tabs = tabs;
+	tabElem.insertBefore(headerElem, tabElem.children[0]);
+	
+	result.setCurrentTab(tabs[0]); // select first tab
+
+	return result;
+}
+
+/****************************************************************************/
+/*************************** Compression ************************************/
+/****************************************************************************/
+
+// LZW-compress a string
+function lzw_encode(data) {
+    var dict = {};
+    var out = [];
+    var currChar;
+    var phrase = String.fromCharCode(data[0]);
+    var code = 256;
+    for (var i = 1; i < data.length; i++) {
+        currChar = String.fromCharCode(data[i]);
+        if (dict[phrase + currChar] != null) {
+            phrase += currChar;
+        } else {
+            out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+            dict[phrase + currChar] = code;
+            code++;
+            phrase = currChar;
+        }
+    }
+    out.push(phrase.length > 1 ? dict[phrase] : phrase.charCodeAt(0));
+	
+    return out;
+}
+
+// Decompress an LZW-encoded string
+function lzw_decode(data) {
+    var dict = {};
+    var currChar = String.fromCharCode(data[0]);
+    var oldPhrase = currChar;
+    var out = [data[0]];
+    var code = 256;
+    var phrase;
+    for (var i = 1; i < data.length; i++) {
+        var currCode = data[i];
+        if (currCode < 256) {
+            phrase = String.fromCharCode(data[i]);
+        } else {
+           phrase = dict[currCode] ? dict[currCode] : (oldPhrase + currChar);
+        }
+		for (var n = 0; n < phrase.length; n++) {
+			out.push(phrase.charCodeAt(n));
+		}
+        currChar = phrase.charAt(0);
+        dict[code] = oldPhrase + currChar;
+        code++;
+        oldPhrase = phrase;
+    }
+    return out;
+}
+
+/****************************************************************************/
+/* ***************************** Base64 *********************************** */
+/****************************************************************************/
+
+var Base64 = {
+	// private property
+	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+
+	// public method for encoding
+	encode : function (input) {
+		var output = "";
+		var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+		var i = 0;
+		var getByte = function (index) { return "";};
+		
+		if (typeof input == "string") {
+			input = Base64.encodeUTF8(input); // encode unicode to utf8
+			getByte = function (index) { return input.charCodeAt(index); };
+		} else { // array
+			getByte = function (index) { return input[index]; };
+		}
+		
+		while (i < input.length) {
+			chr1 = getByte(i++);
+			chr2 = getByte(i++);
+			chr3 = getByte(i++);
+			enc1 = chr1 >> 2;
+			enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+			enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+			enc4 = chr3 & 63;
+			if (isNaN(chr2)) {
+				enc3 = enc4 = 64;
+			} else if (isNaN(chr3)) {
+				enc4 = 64;
+			}
+			output = output + this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) + this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+		}
+		
+		return output;
+	},
+
+	// public method for decoding
+	decode : function (input, toArray) {
+		var output = "";
+		var chr1, chr2, chr3;
+		var enc1, enc2, enc3, enc4;
+		var i = 0;
+		input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+		
+		if (toArray) {
+			output = new Uint8Array(input.length * 3 / 4);
+			var j = 0;
+			while (i < input.length) {
+				enc1 = this._keyStr.indexOf(input[i++]);
+				enc2 = this._keyStr.indexOf(input[i++]);
+				enc3 = this._keyStr.indexOf(input[i++]);
+				enc4 = this._keyStr.indexOf(input[i++]);
+				chr1 = (enc1 << 2) | (enc2 >> 4);
+				chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+				chr3 = ((enc3 & 3) << 6) | enc4;
+				output[j++] = chr1;
+				if (enc3 != 64) {
+					output[j++] = chr2;
+				}
+				if (enc4 != 64) {
+					output[j++] = chr3;
+				}
+			}
+			if (output.length != j) {
+				output = output.slice(0, j);
+			}
+			
+		} else {
+			while (i < input.length) {
+				enc1 = this._keyStr.indexOf(input.charAt(i++));
+				enc2 = this._keyStr.indexOf(input.charAt(i++));
+				enc3 = this._keyStr.indexOf(input.charAt(i++));
+				enc4 = this._keyStr.indexOf(input.charAt(i++));
+				chr1 = (enc1 << 2) | (enc2 >> 4);
+				chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+				chr3 = ((enc3 & 3) << 6) | enc4;
+				output = output + String.fromCharCode(chr1);
+				if (enc3 != 64) {
+					output = output + String.fromCharCode(chr2);
+				}
+				if (enc4 != 64) {
+					output = output + String.fromCharCode(chr3);
+				}
+			}
+			output = Base64.decodeUTF8(output); // decode utf8 to unucode
+		}
+		
+		return output;
+	},
+	
+	// convert UTF-8 to binary string
+	encodeUTF8 : function (string) {
+		string = string.replace(/\r\n/g,"\n");
+		var utftext = "";
+
+		for (var n = 0; n < string.length; n++) {
+			var c = string.charCodeAt(n);
+			if (c < 128) {
+				utftext += String.fromCharCode(c);
+			} else if ((c > 127) && (c < 2048)) {
+				utftext += String.fromCharCode((c >> 6) | 192);
+				utftext += String.fromCharCode((c & 63) | 128);
+			} else {
+				utftext += String.fromCharCode((c >> 12) | 224);
+				utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+				utftext += String.fromCharCode((c & 63) | 128);
+			}
+		}
+
+		return utftext;
+	},
+
+	// convert binary string to UTF-8
+	decodeUTF8 : function (input) {
+		var string = "";
+		var i = 0;
+		var c = c1 = c2 = 0;
+		var getByte;
+		
+		if (typeof input == "string") { 
+			getByte = function (index) { return input.charCodeAt(index); };
+		} else { // array
+			getByte = function (index) { return input[index]; };
+		}
+		
+		while ( i < input.length ) {
+			c = getByte(i++);
+			if (c < 128 || c < 0b11000000) {
+				string += String.fromCharCode(c);
+			} else if ((c >= 0b11000000) && (c < 0b11100000)) {
+				c2 = getByte(i++);
+				string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+			} else if ((c >= 0b11100000) && (c < 0b11110000)) {
+				c2 = getByte(i++);
+				c3 = getByte(i++);
+				string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+			} else {
+				c2 = getByte(i++);
+				c3 = getByte(i++);
+				c4 = getByte(i++);
+				string += String.fromCharCode(((c & 255) << 18) | ((c2 & 63) << 12) | ((c3 & 63) << 6) | (c4 & 63));
+			}
+
+			// decode F09F8CBC0A to single char
+		}
+
+		return string;
+	}
+}	
+
+</script>
+</body>
+</html>

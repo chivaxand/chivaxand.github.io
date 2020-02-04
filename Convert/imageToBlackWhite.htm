@@ -1,0 +1,84 @@
+<html> 
+  <head>
+      <title>Canvas image test</title>
+  </head>
+  <body onload="init();">
+
+	<input type="file" id="imageLoader" name="imageLoader"/><br />
+	<canvas id="canvas_id2"></canvas><br />
+	
+	<script>
+		function init() {
+
+		}
+
+		var imageLoader = document.getElementById('imageLoader');
+		imageLoader.addEventListener('change', handleImage, false);
+		var canvas = document.getElementById('canvas_id2');
+		var ctx = canvas.getContext('2d');
+
+		function handleImage(e)
+		{
+			var reader = new FileReader();
+			reader.onload = function(event)
+			{
+				var img = new Image();
+				img.onload = function()
+				{
+					var width =  img.width * 5;
+					var height = img.height * 5;
+					canvas.width = width;
+					canvas.height = height;
+					//ctx.drawImage(img,0,0);
+					ctx.drawImage(img, 0, 0, width, height);
+
+					// edit loaded image
+					var colorError = 0;
+					var canvasData = ctx.getImageData(0, 0, width, height);
+					for(var x = 0; x < width; x++)
+					{
+						for(var y = 0; y < height; y++)
+						{
+							var idx = (x + y * width) * 4;
+							/*
+							if (y < height/2) {
+								canvasData.data[idx + 0] = canvasData.data[idx + 0]-Math.random()*70;		// RED 
+								canvasData.data[idx + 1] = canvasData.data[idx + 1]-Math.random()*70;		// GREEN 
+								canvasData.data[idx + 2] = canvasData.data[idx + 2]-Math.random()*70;		// BLUE 
+								canvasData.data[idx + 3] = 255;												// ALPHA 
+							} else { 
+								var color = 0;
+								if (((canvasData.data[idx + 0] + canvasData.data[idx + 1] + canvasData.data[idx + 2]) / 3) > 127) {
+									color = 255;
+								}
+							 } */
+
+							var color = 0;
+							var c = (canvasData.data[idx + 0] + canvasData.data[idx + 1] + canvasData.data[idx + 2])/3;
+				            if (c + colorError > 127) {
+				                color = 255;
+				            }
+				            
+				            colorError = colorError + c - color;
+				            if (x >= (width - 1)) {
+				                colorError = 0;
+				            }
+
+							canvasData.data[idx + 0] = color;
+							canvasData.data[idx + 1] = color;
+							canvasData.data[idx + 2] = color;
+							canvasData.data[idx + 3] = 255;
+						}
+					}
+					ctx.putImageData(canvasData, 0, 0);	
+						
+				}
+				img.src = event.target.result;
+			}
+			reader.readAsDataURL(e.target.files[0]);     
+		}
+
+	</script>
+
+  </body> 
+</html>

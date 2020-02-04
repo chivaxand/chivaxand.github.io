@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js" type="text/javascript"></script>
+	<script src="jpegEncode.js"></script>
+	
+	<style type="text/css">
+		
+	</style>
+	
+	<script type="text/javascript">
+	//<![CDATA[
+	
+	function attachEvent(element, type, fn)
+	{
+		if (element.addEventListener) { element.addEventListener(type, fn, false); } 
+		else if (element.attachEvent) { element.attachEvent('on' + type, fn); }
+	}
+	function onLoad(onLoadFunc)
+	{
+		if(window.addEventListener){ window.addEventListener("load", onLoadFunc, false); } else 
+		if(window.attachEvent){ window.attachEvent("onload", onLoadFunc); } else{ document.addEventListener("load", onLoadFunc, false);}
+	}
+	
+	onLoad(function()
+	{
+		var canvas = document.getElementById("testCanvas");
+		var ctx = canvas.getContext("2d");	
+		ctx.fillStyle="rgb(255,255,255)";
+		ctx.fillRect(0,0,canvas.width, canvas.height);
+		for (i=0; i<150; i++)
+		{
+			ctx.fillStyle="rgb("+(parseInt(Math.random()*255))+","+(parseInt(Math.random()*255))+","+(parseInt(Math.random()*255))+")";
+			ctx.beginPath();
+			ctx.arc(Math.random()*350,Math.random()*350,Math.random()*20, 0,Math.PI*2,true);
+			ctx.fill();
+		}
+	});
+	
+	
+	function DoJPGEncode(qu)
+	{
+		var canvas = document.getElementById("testCanvas");
+		var ctx = canvas.getContext("2d");
+		var encoder = new JPEGEncoder();
+
+		var theImgData = (ctx.getImageData(0, 0, canvas.width, canvas.height));
+		var jpegURI = encoder.encode(theImgData,qu);
+		
+		var img = document.getElementById("res_img");
+		img.src = jpegURI;
+	}
+		
+		
+	function winmain(inpData)
+	{
+		var inp_1 = document.getElementById('inp_1').value;
+		DoJPGEncode(inp_1);
+	}
+		
+	//]]>
+	</script>
+
+</head>
+	
+<body>
+	<canvas id="testCanvas" width="300" height="300"></canvas> <img src="" id="res_img" /> <br />
+	<input type="text" value="20" id="inp_1" /> <br>
+	
+	<input type="button" value="Run" onclick="winmain()" /> <br>
+	
+</body>
+</html>

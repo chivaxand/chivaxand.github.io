@@ -80,9 +80,9 @@ label input[type="text"] {
 			<label><input type="radio" name="operation" value="strNormalize">String normalize canonical</label>
 			<label><input type="radio" name="operation" value="unicode">String to Unicode</label>
 			<label><input type="radio" name="operation" value="html">String to HTML</label>
-			<label><input type="radio" name="operation" value="uri">String to URI encode</label>
+			<label><input type="radio" name="operation" value="uri" checked>String to URI encode</label>
 			<label><input type="radio" name="operation" value="base64">String to Base64</label>
-			<label><input type="radio" name="operation" value="hexToBase64" checked>Hex to Base64</label>
+			<label><input type="radio" name="operation" value="hexToBase64">Hex to Base64</label>
 			<label><input type="radio" name="operation" value="hexBin">Hex to Bin</label>
 			<label><input type="radio" name="operation" value="hex">Dec to Hex</label>
 			<label><input type="radio" name="operation" value="binary">Dec to Bin</label>
@@ -143,9 +143,81 @@ data:text/html;charset=utf-8,...
 data:image/png;base64,...
 data:application/octet-stream,...
 
-https://codebeautify.org/jsonviewer
+Edit current page
+javascript:document.body.contentEditable='true'; document.designMode='on'; void 0 
+
+AntiCopy AntiBlur
+javascript:function n(){return true};var s=document.querySelectorAll('*');s.a=document;var e;for(var i in s){e=s[i];if(e.style!=undefined)e.style.filter='none';e.oncopy=n;e.onselectstart=n;e.oncontextmenu=n;e.onmousedown=n;}
+
+Copy element
+var node = $0;
+if (document.body.createTextRange) {
+	var range = document.body.createTextRange();
+	range.moveToElementText(node);
+	range.select();
+} else if (window.getSelection) {
+	var selection = window.getSelection();
+	var range = document.createRange();
+	range.selectNodeContents(node);
+	selection.removeAllRanges();
+	selection.addRange(range);
+} else {
+	console.warn("Unsupported");
+}
+document.execCommand("copy");
+
+Regexp
+https://developer.mozilla.org/ru/docs/Web/JavaScript/Reference/Global_Objects/RegExp
+
+Dropbox URL
+https://dl.dropboxusercontent.com/s/uf7zps....
+
+Save to File
+var saveData = (function () {
+	var a = document.createElement("a");
+	document.body.appendChild(a);
+	a.style = "display: none";
+	return function (data, fileName) {
+		//data = JSON.stringify(data),
+		var	blob = new Blob([data], {type: "octet/stream"});
+		var	url = window.URL.createObjectURL(blob);
+		a.href = url;
+		a.download = fileName;
+		a.click();
+		a.remove();
+		window.URL.revokeObjectURL(url);
+	};
+}());
+
+AJAX Send Request
+(function() { 
+		var req = new XMLHttpRequest();
+		req.onload = function() {
+			console.log(this.responseText);
+			saveData(this.responseText, "file.txt")
+		}
+		req.open("get", "https://dl.dropboxusercontent.com/s/2gxp.../info.txt?dl=1", true);
+		req.send();
+	})()
+
+All Global variables
+for (var i in window) {
+  console.log(i);
+}
+function isNative(fn) {
+	return (/\{\s*\[native code\]\s*\}/).test('' + fn);
+}
+
+<a href="https://codebeautify.org/jsonviewer">JSON Beautify</a>
+<a href="https://tools.knowledgewalls.com/online-patch-diff-viewer">Diff/Patch view</a> 
 
 </pre>
+
+<br>
+<input type="button" value="Save HTML" class="btnNav" onclick="openPageWithHTML();" />
+<div id="content_editable" style="min-height: 30pt; outline: 1px solid #eeeeee;" contenteditable>contenteditable</div>
+<br>
+
 
 <input type="text" value="127044" id="charsOffset" class="input" /> 
 <input type="button" value="<<<" class="btnNav" onclick="gen_chr('<');" />
@@ -287,24 +359,30 @@ function process(encode) {
 	
 	if (operationType == "regReplace") {
 		encode = true;
+		inputData = inputData = document.getElementById('sourceData').value; // always get from source
 		var reg = new RegExp(parameters[1].value, "gmi");
 		result = inputData.replace(reg, parameters[2].value);
 	}
 
 	if (operationType == "regFilter") {
 		encode = true;
+		inputData = document.getElementById('sourceData').value; // always get from source
 		var lines = inputData.split(/\r?\n/);
-		var match = true;
+		var regMatch;
+		var regNotMatch;
 		if (parameters[1].value.length > 0) {
-			reg = new RegExp(parameters[1].value, "gmi");
+			regMatch = new RegExp(parameters[1].value, "mi");
 		} else if (parameters[2].value.length > 0) {
-			reg = new RegExp(parameters[2].value, "gmi");
+			regNotMatch = new RegExp(parameters[2].value, "mi");
 		}
 
-		if (reg) {
+		if (regMatch != undefined || regNotMatch != undefined) {
 			for (var i = 0; i < lines.length; i++) {
 				var line = lines[i];
-				if (reg.test(line) == match) {
+				if (regMatch != undefined && regMatch.test(line) == true) {
+					result += line + "\n";
+				}
+				if (regNotMatch != undefined && regNotMatch.test(line) == false) {
 					result += line + "\n";
 				}
 			}
@@ -324,6 +402,20 @@ function process(encode) {
 	document.getElementById('res-title').innerHTML = document.getElementById('resultData').value.length;
 }
 
+function openPageWithHTML () {
+	var elem = getById("content_editable");
+	var content = "<!DOCTYPE html><HTML><head><title>none</title></head> <body>";
+	content += elem.innerHTML;
+	content += "</body></HTML>";
+
+	var win = window.open(/*location.href*/'','_blank', '');
+	win.document.open();
+	win.document.write(content);
+	win.document.close(); // */
+	
+	/*	var blob = new Blob([content], {type: "text/html;charset=utf-8"});
+	win.location = URL.createObjectURL(blob); // */
+}
 
 // **************************************************************************************************************************
 // **************************************************************************************************************************
@@ -472,6 +564,10 @@ var saveFile = (function () {  // function (fileName, data)
 // ************************************************************************************
 // ************************************* Helpers **************************************
 // ************************************************************************************
+
+function getById(identifier) {
+		return document.getElementById(identifier);
+	}
 
 String.prototype.pad = function(size) {
       var s = String(this);

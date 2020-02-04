@@ -1,0 +1,96 @@
+<html> 
+
+	<body onload="init();">
+	<div>  
+		<canvas id="testCanvas" width="300" height="300"></canvas>
+		<img id="out_img" src='' />
+	</div>	  
+	<div>
+		<textarea id="debugConsole" rows="10" cols="60"></textarea>
+		<p>
+			<button onclick="generate_img();">Generate Image</button>
+			<input type="file" id="imageLoader" name="imageLoader"/>
+		<p>
+	</div>
+	
+	<script type="text/javascript">
+	
+		function init()
+		{
+			var canvas = document.getElementById("testCanvas");
+			if (canvas.getContext) 
+			{
+				var ctx = canvas.getContext("2d");
+				for (i=0; i<150; i++)
+				{
+					ctx.fillStyle="rgb("+(parseInt(Math.random()*255))+","+(parseInt(Math.random()*255))+","+(parseInt(Math.random()*255))+")";
+					ctx.beginPath();
+					ctx.arc(Math.random()*350,Math.random()*350,Math.random()*20, 0,Math.PI*2,true);
+					ctx.fill();
+				}
+			}  				
+			var imageLoader = document.getElementById('imageLoader');
+			imageLoader.addEventListener('change', handleImage, false);
+		}
+
+
+
+		function handleImage(e){
+			var reader = new FileReader();
+			reader.onload = function(event){
+				var img = new Image();
+				img.onload = function(){
+					var canvas = document.getElementById("testCanvas");
+					var ctx = canvas.getContext("2d");
+					canvas.width = img.width;
+					canvas.height = img.height;
+					ctx.drawImage(img,0,0);
+					
+					// edit loaded image
+					/*
+						var canvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+						for(var i = 0; i < canvasData.width; i++){
+							for(var j = 0; j < canvasData.height; j++){
+								var idx = (i + j * canvas.width) * 4;
+								canvasData.data[idx + 0] = canvasData.data[idx + 0]-Math.random()*50;		// RED - красный
+								canvasData.data[idx + 1] = canvasData.data[idx + 1]-Math.random()*50;		// GREEN - зелёный
+								canvasData.data[idx + 2] = canvasData.data[idx + 2]-Math.random()*50;		// BLUE - синий
+								canvasData.data[idx + 3] = 255;						// ALPHA - альфа-канал
+							}
+						}
+						ctx.putImageData(canvasData, 0, 0);	 //  */
+						
+				}
+				img.src = event.target.result;
+			}
+			reader.readAsDataURL(e.target.files[0]);     
+		}
+		
+		function generate_img()
+		{
+			var testCanvas = document.getElementById("testCanvas");  
+			var canvasData = testCanvas.toDataURL("image/png");
+			
+			document.getElementById("out_img").src = canvasData;
+			
+			var postData = "canvasData="+canvasData;
+			var debugConsole= document.getElementById("debugConsole");  
+			debugConsole.value=canvasData;
+	  
+			var ajax = new XMLHttpRequest();
+			ajax.open("POST",'testSave.php',true);    
+			ajax.setRequestHeader('Content-Type', 'canvas/upload');
+			//ajax.setRequestHeader('Content-TypeLength', postData.length);
+			ajax.onreadystatechange=function()
+			{
+				if (ajax.readyState == 4)
+				{ 
+					//alert(ajax.responseText);
+				}
+			}
+			ajax.send(postData);  
+		}
+
+	</script>  
+  </body> 
+</html>

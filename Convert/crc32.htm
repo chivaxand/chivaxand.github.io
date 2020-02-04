@@ -1,0 +1,64 @@
+
+<html> 
+<head><title>JavaScript Decoder</title>
+  
+<script type="text/javascript"> 
+
+var crc32 = (function CRC32() {
+	var selfPublic = this;
+	function generateCRCTable() {
+		var c;
+		var crcTable = [];
+		for (var n = 0; n < 256; n++) {
+			c = n;
+			for (var k = 0; k < 8; k++) {
+				c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+			}
+			crcTable[n] = c;
+		}
+
+		return crcTable;
+	}
+	
+    selfPublic.CRC32Table = generateCRCTable();
+    
+    selfPublic.text = function(str) {
+        var crcTable = selfPublic.CRC32Table || (selfPublic.CRC32Table = generateCRCTable());
+        var crc = 0 ^ (-1);
+		var str = unescape(encodeURIComponent(str)); // encode to utf8 bytes
+
+        for (var i = 0; i < str.length; i++) {
+            crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
+        }
+
+        return (crc ^ (-1)) >>> 0;
+    };
+
+	return selfPublic;
+})();
+
+function calc_crc32(text) {
+	var crc32Result = crc32.text(text);
+	document.getElementById('resultDiv').innerHTML = "Decimal: " + crc32Result + "<br />Hex: 0x" + crc32Result.toString(16).toUpperCase(); 
+}
+
+</script> 
+
+</head>
+ 
+<body> 
+
+<h2>CRC32 Calculation</h2>
+<textarea id="sourceText" style="width:400px; height:100px;" 
+			onKeyUp='calc_crc32(this.value);' 
+			onFocus='calc_crc32(this.value);'
+			onBlur= 'calc_crc32(this.value);'>123456789</textarea>
+<br>
+<h2>Result</h2>		
+<div id="resultDiv"></div>
+<br><br><br><br>
+
+   
+  
+</body> 
+</html> 

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html> 
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<style type="text/css">
+		.no-js-div {
+			display: none;
+		}
+		.no-js .no-js-div {
+			display: block;
+			background: #FAA;
+			text-color: #000;
+		}
+		.main {
+			color: #505080;
+			font-size: 13pt;
+			text-align: left;
+			font-family: Tahoma;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #FAFAFF;
+			padding: 20pt;
+			margin: 20pt;
+		}
+		.main input[type="text"] {
+			color: #303030; 
+			font-size: 13pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #ffffff !important; 
+			outline: none; 
+			height: 24pt;
+			width: 300px; 
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+		}
+		.main input[type="checkbox"] {
+			zoom: 1.7;
+    		margin: 0 2px 0 0;
+		}
+		.main input[type="radio"] {
+			zoom: 1.7;
+    		margin: 0 2px 0 0;
+		}
+		input.small {
+			width: 100pt;
+		}
+		.main textarea {
+			color: #303030; 
+			font-size: 13pt;
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #ffffff !important; 
+			outline: none;
+			width:900px; height:200px;
+		}
+		.main select {
+			color: #303030;
+			font-size: 13pt;
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #ffffff !important; 
+			outline: none; 
+		}
+		.leftPart, .rightPart {
+			display: table-cell; /* display: table;  */
+		}
+
+		.result {
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #FFFFFF;
+			padding: 20pt;
+			margin: 20pt;
+			margin-left: 0;
+			width: auto;
+			min-height: 300px;
+		}
+		.main input[type="button"] {
+			color: #FFFFFF; 
+			font-size: 13pt;
+			border: 1px solid #DDDDFF; 
+			border-radius: 3px;
+			background: #5f5fe4; 
+			outline: none; 
+			height: 40pt;
+			width: 200px; 
+			margin: 5pt 5pt 5pt 0pt;
+			padding: 0 5pt 0 5pt;
+		}
+		.checkBoxParent label {
+			display: flex;
+   	 		align-items: center;
+		}
+		.radioParent label {
+			display: flex;
+   	 		align-items: center;
+		}
+	</style>
+
+	<script type="text/javascript">
+	//<![CDATA[
+	function addListener(element, type, fn) {
+		if (element.addEventListener) { element.addEventListener(type, fn, false); } 
+		else if (element.attachEvent) { element.attachEvent('on' + type, fn); }
+	}
+	
+	(function initOnLoad(onLoadFunc) {
+		if (window.addEventListener){ window.addEventListener("load", onLoadFunc, false); } 
+		else if (window.attachEvent) { window.attachEvent("onload", onLoadFunc); } 
+		else { document.addEventListener("load", onLoadFunc, false);}
+	})(function (e) {
+		// none
+	})
+
+	function getById(identifier) {
+		return document.getElementById(identifier);
+	}
+
+	function log(str, no_br) {
+		var br = '<br />';
+		if (no_br) br = '';
+		var log = getById('logData');
+		var new_val = '';
+		if (typeof str !== 'undefined') new_val = log.innerHTML + str+br;
+		log.innerHTML = new_val;
+	}
+
+	function doParse(inpData) {
+		log();
+		var sourceText = getById('sourceText').value;
+		var parsingScript = getById('parsingScript').value;
+		var parser = Parser(sourceText);
+		parser.setText(sourceText);
+
+		eval(parsingScript);
+	}
+	
+	var DataBase = function() {
+		var db = {};
+		db.records = [];
+		db.index = 1; // auto incrementing index
+		db.prevResult = []; // contains previous search result
+
+		db.clear = function() {
+			db.records = [];
+			db.index = 0;
+			db.prevResult = [];
+		}
+
+		db.add = function(record) { // record must be object, will be added unique field "dbIndex"
+			record.dbIndex = db.index;
+			db.records[db.index] = record;
+			db.index++;
+		}
+
+		db.update = function(record) { // must contains unique field "dbIndex"
+			var index = record.dbIndex;
+			if (typeof index !== 'number') { 
+				log('Error: no "dbIndex" field'); 
+			} else {
+				db.records[index] = record;
+			}			
+		}
+
+		db.delete = function(record) {
+			var index = record.dbIndex;
+			if (typeof index !== 'number') { 
+				log('Error: no "dbIndex" field'); 
+			} else {
+				db.records[index] = undefined;
+			}	
+		}
+
+		db.findOneByField = function(fieldName, value) { // not indexed search
+			var records = db.records;
+			for (var i = 0; i < records.length; i++) {
+				var record = records[i];
+				if (record[fieldName] == value) {
+					return record;
+				}
+			}
+			return undefined;
+		}
+
+		db.findInArray = function(records, fieldName, value) { // not indexed search in array
+			var result = [];
+			for (var i = 0; i < records.length; i++) {
+				var record = records[i];
+				if (record[fieldName] == value) {
+					result.push(record);
+				}
+			}
+			return result;
+		}
+
+		db.findAllByField = function(fieldName, value) { // not indexed search
+			var result = db.findInArray(db.records, fieldName, value);
+			db.prevResult = result;
+			return result;
+		}	
+
+		db.findInResult = function(fieldName, value) { // not indexed search from previous search result
+			var result = db.findInArray(db.prevResult, fieldName, value);
+			db.prevResult = result;
+			return result;
+		}
+
+		return db;
+	}
+
+	var db = DataBase();
+
+	var Parser = function(text) {
+		var obj = {};
+		obj.pos = 0;
+		obj.text = text;
+		
+		obj.setText = function(text) {
+			obj.text = text;
+			obj.pos = 0;
+		}
+		
+		obj.isNotEnd = function() {
+			return (obj.pos < obj.text.length);
+		}
+
+		obj.readChar = function() {
+			if (obj.isNotEnd()) {
+				var char = obj.text.charAt(obj.pos);
+				obj.pos++;
+				return char;
+			}
+			return "";
+		}
+
+		obj.nextChar = function() {
+			if (obj.isNotEnd()) {
+				return obj.text.charAt(obj.pos);
+			}
+			return "";
+		}
+
+		obj.isNextString = function(nextString) {
+			var index = 0;
+			var pos = obj.pos;
+			while (index < nextString.length
+					&& pos < obj.text.length 
+					&& obj.text.charAt(pos) == nextString.charAt(index)) {
+				index++;
+				pos++;
+			}
+			return (index == nextString.length);
+		}
+
+		obj.readLine = function() {
+			var result = ""; 
+			while (obj.isNotEnd()) {
+				var char = obj.readChar();
+				if (char == "\r" || char == "\n") { // end of line
+					if (char == "\r" && obj.nextChar() == "\n") { // "\r\n"
+						obj.readChar(); // increase position index
+					}
+					return result;
+				}
+				result += char;
+			}
+			return result;
+		}
+
+		obj.readUntilString = function(string, keepString) { // Read all text until string or array of strings. String will be skipped by default (keepString = false)
+			var strings = Array.isArray(string) ? string : [string];
+			var result = "";
+			var toString = "";
+			while (obj.isNotEnd()) {
+				var finish = false;
+				for (var i = 0; i < strings.length; i++) {
+					toString = strings[i];
+					if (obj.isNextString(toString)) {
+						finish = true;
+						break;
+					}
+				}
+				if (finish) {
+					break;
+				}
+				result += obj.readChar();
+			}
+			if (keepString != true) {
+				obj.pos = Math.min(obj.text.length, obj.pos + toString.length);
+			}
+			return result;
+		}
+
+		obj.skipString = function(string) {
+			var strings = Array.isArray(string) ? string : [string];
+			var finish = false;
+			while (!finish && obj.isNotEnd()) {
+				finish = true;
+				for (var i = 0; i < strings.length; i++) {
+					var toString = strings[i];
+					if (obj.isNextString(toString)) {
+						finish = false;
+						obj.pos = Math.min(obj.text.length, obj.pos + toString.length);
+						break;
+					}
+				}
+			}
+		}
+
+		obj.readStringInQuotes = function() {
+			var quotes = obj.nextChar();
+			if (['"', '\'', '`'].indexOf(quotes) < 0) return "";
+			obj.readChar();
+			var result = "";
+			while (obj.isNotEnd()) {
+				var char = obj.readChar();
+				if (char == "\\") {
+					result += char;
+					char = obj.readChar(); // read any escaped symbol, e.g. \"
+				} else if (char == quotes) {
+					return result;
+				}
+				result += char;
+			}
+			return result;
+		}
+
+		return obj;
+	};
+
+	//]]>
+	</script>
+
+</head>
+	
+<body>
+	<div class="main">
+		<h3>Source text to parse</h2>
+		<textarea id="sourceText">@"AA" : @"111", @"BB" : @"222", 
+#"CC" : @"333",
+#"DD" : @"444",
+		</textarea> <br>
+
+		<h3>Parsing script</h2>
+		<textarea id="parsingScript">
+db.clear();
+while (parser.isNotEnd()) {
+	parser.readUntilString(["@", "#"]);
+	var line1 = parser.readStringInQuotes();
+	parser.readUntilString(["@", "#"]);
+	var line2 = parser.readStringInQuotes();  
+	db.add({
+		"lang": line1,
+		"name": line2
+	});
+}
+
+log(db.index)
+for (var i = 0; i < db.index; i++) {
+	var record = db.records[i];
+	if (record) {
+		log(JSON.stringify(record))
+	}
+}
+		</textarea> <br>
+
+		<input type="button" value="Parse" onclick="doParse()" /> <br>
+
+		<br><br>
+		<div id="logData" class="result">
+			
+		</div>
+
+		<pre>
+var db = {};
+db.records = [];
+db.index = 1; // auto incrementing index
+db.prevResult = []; // contains previous search 
+
+db.clear()
+db.add(record) // record must be object, will be added unique field "dbIndex"
+db.update(record) // must contains unique field "dbIndex"
+db.delete(record)
+db.findOneByField(fieldName, value) // not indexed search
+db.findInArray(records, fieldName, value) { // not indexed search in array
+db.findAllByField(fieldName, value) { // not indexed search
+db.findInResult(fieldName, value) { // not indexed search from previous search result
+
+var parser = Parser(sourceText);
+parser.setText(sourceText);
+parser.pos // current position
+parser.isNotEnd()
+parser.readChar()
+parser.nextChar()
+parser.isNextString(nextString)
+parser.readLine()
+parser.readUntilString(string, keepString) { // Read all text until string or array of strings. String will be skipped by default (keepString = false)
+parser.skipString(string)
+parser.readStringInQuotes()
+		</pre>
+
+
+	</div>
+</body>
+</html>
